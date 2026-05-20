@@ -1,8 +1,4 @@
-Here is the expanded, highly detailed version of your `README.md`. It includes comprehensive technical explanations of every sub-system, concrete code architecture references matching your repository, explicit synchronization timelines, and an exhaustive configuration guide.
 
----
-
-```markdown
 # Multi-Process Dungeon Crawler Simulator
 
 A robust, concurrent terminal-based simulation application written in C that showcases advanced principles of UNIX Systems Programming and Inter-Process Communication (IPC). The system demonstrates high-performance parent-child orchestration, managing a dynamic party of completely autonomous worker processes (a Barbarian, a Wizard, and a Rogue). Synchronous operations are achieved via POSIX shared memory segments, real-time POSIX signal handling vectors, and counting semaphores to coordinate microsecond-accurate vault extraction phases.
