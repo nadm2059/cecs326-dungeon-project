@@ -9,4 +9,4 @@ rogue
 
 # Ignore environment/OS specific files
 .DS_Store
-*.Zone.Identifier
+*:Zone.Identifier
