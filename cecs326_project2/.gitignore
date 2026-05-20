@@ -1,0 +1,12 @@
+# Ignore compiled executables
+game
+barbarian
+wizard
+rogue
+
+# Ignore all object files
+*.o
+
+# Ignore environment/OS specific files
+.DS_Store
+*.Zone.Identifier
