@@ -176,5 +176,4 @@ Once compilation wraps up with no errors or warnings, you can start the parent o
 
 4. **Resource Cleaning & Kernel Scrubbing:**
 The supervisor naturally handles cleanup when the simulation finishes. If manually terminating mid-run, issue a termination interrupt (`Ctrl+C`). The signal handlers intercept the interrupt and execute clean-up hooks using `shm_unlink()` and `sem_close()` to free all kernel resource tables.
-```
 ---
