@@ -113,17 +113,11 @@ Asynchronous communication relies on explicit POSIX user-defined signals routed 
 
 Endgame asset gathering requires strict thread synchronization to simulate cooperative leverage constraints. Access to the reward table is regulated via two system-named POSIX binary semaphores (`"/LeverOne"` and `"/LeverTwo"`):
 
-* 
 **The Claim Phase:** Upon intercepting `SIGUSR2` , the Barbarian down-regulates `"/LeverOne"` via `sem_wait()` while the Wizard down-regulates `"/LeverTwo"`. This pulls their values from `1` to `0`, signaling that the vault doors are physically pinned open.
 
-
-* 
 **The Extraction Window:** While the semaphores are securely downed, the Rogue sweeps the shared data space, copying sequential string keys from `dungeon->treasure` into `dungeon->spoils`.
 
-
 * **The Release Phase:** The Barbarian and Wizard monitor `dungeon->spoils[3]`. As soon as the final index byte populates, they execute `sem_post()` to step out of the critical lock zones, ensuring the vault clear-out completes within the required timeout.
-
-
 
 ---
 
@@ -131,15 +125,11 @@ Endgame asset gathering requires strict thread synchronization to simulate coope
 
 ### System Dependencies
 
-* 
 **Processor:** x86_64 architecture (required by the pre-compiled ELF binary file `dungeon_X86_64.o`).
-
-
 * **Toolchain:** GNU Compiler Collection (`gcc`), GNU Make tool suite (`make`).
 * **Libraries:** Standard Real-Time extensions (`-lrt`) for shared memory maps and POSIX Multi-threading interfaces (`-pthread`) for semaphore threading checks.
 
 ### Operational Lifecycle Commands
-
 
 ### Step 1: Rename the Pre-compiled Object File
 
