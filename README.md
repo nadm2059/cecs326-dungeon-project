@@ -140,24 +140,44 @@ Endgame asset gathering requires strict thread synchronization to simulate coope
 
 ### Operational Lifecycle Commands
 
-1. **Clear Directory Artifacts:**
-Wipe out local binary targets, internal compilation logs, and testing structures to ensure clean workspaces:
+
+### Step 1: Rename the Pre-compiled Object File
+
+Before compiling, you need to copy or rename your `dungeon_X86_64.o` file into the target file name expected by your `Makefile` (`dungeon.o`). Run this in your terminal:
+
+```bash
+cp dungeon_X86_64.o dungeon.o
+
+```
+
+---
+
+### Step 2: Clean Existing Build Artifacts
+
+To prevent the linker or compiler from using stale configuration states or cached `.o` fragments from previous attempts, clear the workspace entirely:
+
 ```bash
 make clean
 
 ```
 
+---
 
-2. **Compile Project Components:**
-This triggers decoupled `-c` compilation commands to isolate global variables before passing the multiple-definition bypass flags directly to the linker phase:
+### Step 3: Run the Clean Compilation Loop
+
+Now, trigger your build automation script. Since your `Makefile` contains the `-Xlinker --allow-multiple-definition` flag, it will cleanly bind your custom character files directly to the newly linked `dungeon.o` engine without any duplicate global symbol conflicts:
+
 ```bash
 make
 
 ```
 
+---
 
-3. **Launch the Orchestrator Binary:**
-Execute the primary parent engine node:
+### Step 4: Execute Your Program
+
+Once compilation wraps up with no errors or warnings, you can start the parent orchestrator loop to test your implementation:
+
 ```bash
 ./game
 
