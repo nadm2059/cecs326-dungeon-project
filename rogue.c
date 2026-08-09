@@ -1,4 +1,4 @@
-```c
+
 /*
  * rogue.c - CECS 326 Lab 2
  *
