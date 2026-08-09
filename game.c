@@ -1,4 +1,4 @@
-```c
+
 /*
  * game.c - CECS 326 Lab 2
  *
