@@ -1,4 +1,4 @@
-```c
+
 /*
  * barbarian.c - CECS 326 Lab 2
  *
