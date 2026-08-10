@@ -1,4 +1,4 @@
-name: Build C Project
+name: Build Dungeon Game
 
 on:
   push:
@@ -18,6 +18,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential gcc make
+
+      - name: Link dungeon object file
+        run: cp dungeon_X86_64.o dungeon.o
 
       - name: Compile project
         run: make
