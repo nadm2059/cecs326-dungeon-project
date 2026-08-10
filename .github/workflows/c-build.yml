@@ -1,4 +1,4 @@
-name: Build and Test
+name: Build C Project
 
 on:
   push:
@@ -21,6 +21,3 @@ jobs:
 
       - name: Compile project
         run: make
-
-      - name: Clean build artifacts
-        run: make clean
