@@ -22,15 +22,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-flask \
  && rm -rf /var/lib/apt/lists/*
 
-# Copy compiled executables from the builder stage
+# Copy compiled binaries from the builder stage
 COPY --from=builder /app/game /app/barbarian /app/wizard /app/rogue /app/
 
-# Copy web server code and UI templates
-COPY app.py /app/
-COPY templates/ /app/templates/
+# Copy web app files (ensures /app/templates/index.html structure is preserved)
+COPY app.py /app/app.py
+COPY templates /app/templates
 
 EXPOSE 5000
 ENV PORT=5000
 
-# Default to starting the web server (ideal for Render & Web services)
+# Default to starting the web server
 CMD ["python3", "app.py"]
