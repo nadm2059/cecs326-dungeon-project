@@ -2,34 +2,68 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dungeon Simulator Console</title>
+    <title>Multi-Process Dungeon Simulator</title>
     <style>
-        body { background-color: #0d1117; color: #58a6ff; font-family: monospace; padding: 20px; }
-        #terminal { background: #161b22; border: 1px solid #30363d; padding: 15px; border-radius: 6px; height: 500px; overflow-y: auto; white-space: pre-wrap; }
-        button { background: #238636; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 6px; cursor: pointer; margin-bottom: 15px; }
-        button:hover { background: #2ea043; }
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: sans-serif;
+            padding: 20px;
+        }
+        #terminal {
+            background-color: #020617;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #38bdf8;
+            /* CRITICAL: Preserves line breaks and formatting */
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        button {
+            background-color: #16a34a;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background-color: #15803d;
+        }
     </style>
 </head>
 <body>
-    <h1>Multi-Process Dungeon Simulator</h1>
-    <button onclick="runDungeon()">Start Simulation</button>
-    <div id="terminal">> System initialized. Click 'Start Simulation' to run...</div>
+
+    <h2>Multi-Process Dungeon Simulator</h2>
+    <button id="startBtn" onclick="runSimulation()">Start Simulation</button>
+
+    <div id="terminal">> Awaiting simulation start...</div>
 
     <script>
-        function runDungeon() {
+        function runSimulation() {
             const terminal = document.getElementById('terminal');
-            terminal.innerText = "> Launching C Engine & Spawning Party...\n\n";
-            
+            terminal.textContent = '> Launching C Engine & Spawning Party...\n\n';
+
             const eventSource = new EventSource('/stream-game');
-            
+
             eventSource.onmessage = function(event) {
-                terminal.innerText += event.data;
+                // Append line with explicit newline
+                terminal.textContent += event.data + '\n';
+                // Auto-scroll to bottom as output logs arrive
                 terminal.scrollTop = terminal.scrollHeight;
             };
 
             eventSource.onerror = function() {
+                terminal.textContent += '\n> Simulation run finished.\n';
                 eventSource.close();
-                terminal.innerText += "\n> Simulation run finished.";
             };
         }
     </script>
