@@ -25,7 +25,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy compiled binaries from the builder stage
 COPY --from=builder /app/game /app/barbarian /app/wizard /app/rogue /app/
 
-# Copy web app files (ensures /app/templates/index.html structure is preserved)
+# Ensure binaries have execution permissions
+RUN chmod +x /app/game /app/barbarian /app/wizard /app/rogue
+
+# Copy web app files
 COPY app.py /app/app.py
 COPY templates /app/templates
 
