@@ -7,7 +7,7 @@ WORKDIR /app
 COPY . .
 
 # Link precompiled object file and compile targets
-RUN cp dungeon_X86_64.o dungeon.o && make[cite: 1]
+RUN cp dungeon_X86_64.o dungeon.o && make
 
 # Stage 2: Runtime environment (Web & CLI support)
 FROM ubuntu:24.04
@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
 # Copy compiled executables from the builder stage
-COPY --from=builder /app/game /app/barbarian /app/wizard /app/rogue /app/[cite: 1]
+COPY --from=builder /app/game /app/barbarian /app/wizard /app/rogue /app/
 
 # Copy web server code and UI templates
 COPY app.py /app/
