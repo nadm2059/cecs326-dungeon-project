@@ -1,9 +1,13 @@
 import os
+import re
 import subprocess
 from flask import Flask, Response, render_template
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app = Flask(__name__, template_folder=os.path.join(BASE_DIR, 'templates'))
+
+# Regex to strip ANSI escape sequences (\x1b[...m)
+ANSI_ESCAPE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
 @app.route('/')
 def index():
@@ -14,7 +18,6 @@ def stream_game():
     def generate():
         game_path = os.path.join(BASE_DIR, 'game')
         
-        # Use stdbuf -oL to force line-buffering on stdout/stderr
         process = subprocess.Popen(
             ['stdbuf', '-oL', '-eL', game_path],
             stdout=subprocess.PIPE,
@@ -24,9 +27,11 @@ def stream_game():
             cwd=BASE_DIR
         )
         
-        # Stream live lines as they are produced
         for line in iter(process.stdout.readline, ''):
-            yield f"data: {line}\n\n"
+            # Strip ANSI color codes
+            clean_line = ANSI_ESCAPE.sub('', line).rstrip()
+            if clean_line:
+                yield f"data: {clean_line}\n\n"
             
         process.stdout.close()
         process.wait()
