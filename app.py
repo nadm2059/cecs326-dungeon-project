@@ -2,7 +2,9 @@ import os
 import subprocess
 from flask import Flask, Response, render_template
 
-app = Flask(__name__)
+# Ensure Flask looks in the exact directory relative to app.py
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+app = Flask(__name__, template_folder=os.path.join(BASE_DIR, 'templates'))
 
 @app.route('/')
 def index():
@@ -11,13 +13,16 @@ def index():
 @app.route('/stream-game')
 def stream_game():
     def generate():
-        # Execute the compiled game binary and capture output stream
+        # Execute the compiled game binary from absolute working directory
+        game_path = os.path.join(BASE_DIR, 'game')
+        
         process = subprocess.Popen(
-            ['./game'],
+            [game_path],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
-            bufsize=1
+            bufsize=1,
+            cwd=BASE_DIR  # Ensures child processes like barbarian/rogue are found in working dir
         )
         
         # Stream live stdout lines to the browser
