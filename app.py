@@ -28,13 +28,15 @@ def stream_game():
         )
         
         for line in iter(process.stdout.readline, ''):
-            # Strip ANSI color codes
             clean_line = ANSI_ESCAPE.sub('', line).rstrip()
             if clean_line:
                 yield f"data: {clean_line}\n\n"
             
         process.stdout.close()
         process.wait()
+
+        # Send an explicit completion signal to the frontend
+        yield "data: [FINISHED]\n\n"
 
     return Response(generate(), mimetype='text/event-stream')
 
