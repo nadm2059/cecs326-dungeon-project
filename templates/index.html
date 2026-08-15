@@ -4,50 +4,165 @@
     <meta charset="UTF-8">
     <title>Multi-Process Dungeon Simulator</title>
     <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --terminal-bg: #020617;
+            --barbarian-color: #ef4444;
+            --wizard-color: #a855f7;
+            --rogue-color: #10b981;
+        }
+
         body {
-            background-color: #0f172a;
+            background-color: var(--bg);
             color: #f8fafc;
-            font-family: sans-serif;
-            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 24px;
+            max-width: 1000px;
+            margin: 0 auto;
         }
-        #terminal {
-            background-color: #020617;
-            border: 1px solid #1e293b;
-            border-radius: 8px;
-            padding: 16px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
-            line-height: 1.5;
-            color: #38bdf8;
-            /* CRITICAL: Preserves line breaks and formatting */
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            max-height: 500px;
-            overflow-y: auto;
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
+
+        h2 { margin: 0; font-size: 1.6rem; }
+
         button {
             background-color: #16a34a;
             color: white;
             border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-            border-radius: 6px;
+            padding: 10px 22px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
             cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:hover { background-color: #15803d; transform: translateY(-1px); }
+
+        #dungeon-stage {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
             margin-bottom: 20px;
         }
-        button:hover {
-            background-color: #15803d;
+
+        .hero-card {
+            background-color: var(--card-bg);
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            position: relative;
+            transition: border-color 0.3s, transform 0.2s;
+        }
+
+        .hero-avatar {
+            font-size: 3.5rem;
+            margin: 10px 0;
+            display: inline-block;
+            transition: transform 0.15s ease-in-out;
+        }
+
+        .hero-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 4px; }
+        .hero-status { font-size: 0.85rem; color: #94a3b8; height: 1.2em; }
+
+        .hero-card[data-hero="barbarian"] { border-top: 4px solid var(--barbarian-color); }
+        .hero-card[data-hero="wizard"]    { border-top: 4px solid var(--wizard-color); }
+        .hero-card[data-hero="rogue"]     { border-top: 4px solid var(--rogue-color); }
+
+        @keyframes lunge {
+            0%   { transform: translateY(0) scale(1); }
+            30%  { transform: translateY(-18px) scale(1.25) rotate(-5deg); }
+            60%  { transform: translateY(4px) scale(1.1); }
+            100% { transform: translateY(0) scale(1); }
+        }
+        .anim-lunge .hero-avatar { animation: lunge 0.5s ease-in-out; }
+        .anim-lunge { border-color: var(--barbarian-color) !important; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+
+        @keyframes cast {
+            0%   { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 0 transparent); }
+            50%  { transform: scale(1.3) rotate(10deg); filter: drop-shadow(0 0 12px #a855f7); }
+            100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 0 transparent); }
+        }
+        .anim-cast .hero-avatar { animation: cast 0.6s ease-in-out; }
+        .anim-cast { border-color: var(--wizard-color) !important; box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); }
+
+        @keyframes dash {
+            0%   { transform: translateX(0); }
+            25%  { transform: translateX(-15px) rotate(-10deg); }
+            50%  { transform: translateX(15px) rotate(10deg); }
+            100% { transform: translateX(0); }
+        }
+        .anim-dash .hero-avatar { animation: dash 0.45s ease-in-out; }
+        .anim-dash { border-color: var(--rogue-color) !important; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+
+        #terminal {
+            background-color: var(--terminal-bg);
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 16px;
+            font-family: 'Fira Code', 'Courier New', Courier, monospace;
+            font-size: 13.5px;
+            line-height: 1.55;
+            color: #38bdf8;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            height: 380px;
+            overflow-y: auto;
         }
     </style>
 </head>
 <body>
 
-    <h2>Multi-Process Dungeon Simulator</h2>
-    <button id="startBtn" onclick="runSimulation()">Start Simulation</button>
+    <div class="header">
+        <h2>⚔️ Multi-Process Dungeon Simulator</h2>
+        <button id="startBtn" onclick="runSimulation()">Start Simulation</button>
+    </div>
+
+    <div id="dungeon-stage">
+        <div class="hero-card" id="card-barbarian" data-hero="barbarian">
+            <div class="hero-title" style="color: var(--barbarian-color);">Barbarian</div>
+            <div class="hero-avatar">🪓</div>
+            <div class="hero-status" id="status-barbarian">Awaiting battle...</div>
+        </div>
+
+        <div class="hero-card" id="card-wizard" data-hero="wizard">
+            <div class="hero-title" style="color: var(--wizard-color);">Wizard</div>
+            <div class="hero-avatar">🧙‍♂️</div>
+            <div class="hero-status" id="status-wizard">Calibrating sensors...</div>
+        </div>
+
+        <div class="hero-card" id="card-rogue" data-hero="rogue">
+            <div class="hero-title" style="color: var(--rogue-color);">Rogue</div>
+            <div class="hero-avatar">🗡️</div>
+            <div class="hero-status" id="status-rogue">Stealthed in shadows...</div>
+        </div>
+    </div>
 
     <div id="terminal">> Awaiting simulation start...</div>
 
     <script>
+        function triggerHeroAnimation(hero, animClass, statusText) {
+            const card = document.getElementById(`card-${hero}`);
+            const status = document.getElementById(`status-${hero}`);
+
+            if (statusText) status.textContent = statusText;
+
+            card.classList.remove('anim-lunge', 'anim-cast', 'anim-dash');
+            void card.offsetWidth;
+            card.classList.add(animClass);
+
+            setTimeout(() => {
+                card.classList.remove(animClass);
+            }, 600);
+        }
+
         function runSimulation() {
             const terminal = document.getElementById('terminal');
             terminal.textContent = '> Launching C Engine & Spawning Party...\n\n';
@@ -55,14 +170,27 @@
             const eventSource = new EventSource('/stream-game');
 
             eventSource.onmessage = function(event) {
-                // Append line with explicit newline
-                if (event.data === `[FINISHED]`) {
+                if (event.data === '[FINISHED]') {
                     eventSource.close();
+                    document.getElementById('status-barbarian').textContent = 'Victorious!';
+                    document.getElementById('status-wizard').textContent = 'Victorious!';
+                    document.getElementById('status-rogue').textContent = 'Loot collected!';
                     return;
                 }
-                terminal.textContent += event.data + '\n';
-                // Auto-scroll to bottom as output logs arrive
+
+                const line = event.data;
+                terminal.textContent += line + '\n';
                 terminal.scrollTop = terminal.scrollHeight;
+
+                if (line.includes('[Barbarian]') || line.includes('barbarian')) {
+                    triggerHeroAnimation('barbarian', 'anim-lunge', 'Attacking monster!');
+                } 
+                else if (line.includes('[Wizard]') || line.includes('wizard')) {
+                    triggerHeroAnimation('wizard', 'anim-cast', 'Deciphering glyphs...');
+                } 
+                else if (line.includes('[Rogue]') || line.includes('rogue')) {
+                    triggerHeroAnimation('rogue', 'anim-dash', 'Picking locks / sweeping...');
+                }
             };
 
             eventSource.onerror = function() {
