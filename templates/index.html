@@ -2,23 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Multi-Process Dungeon Simulator</title>
+    <title>Multi-Process Dungeon Simulator - 2D Canvas Engine</title>
     <style>
         :root {
-            --bg: #0f172a;
-            --card-bg: #1e293b;
-            --terminal-bg: #020617;
-            --barbarian-color: #ef4444;
-            --wizard-color: #a855f7;
-            --rogue-color: #10b981;
+            --bg: #0b0f19;
+            --panel-bg: #111827;
+            --border: #1f2937;
+            --text: #f3f4f6;
         }
 
         body {
             background-color: var(--bg);
-            color: #f8fafc;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 24px;
-            max-width: 1000px;
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            padding: 20px;
+            max-width: 900px;
             margin: 0 auto;
         }
 
@@ -26,94 +24,56 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
-        h2 { margin: 0; font-size: 1.6rem; }
+        h2 { margin: 0; font-size: 1.5rem; letter-spacing: -0.025em; }
 
         button {
-            background-color: #16a34a;
+            background-color: #059669;
             color: white;
             border: none;
-            padding: 10px 22px;
-            font-size: 15px;
+            padding: 10px 20px;
+            font-size: 14px;
             font-weight: 600;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: background-color 0.2s, transform 0.1s;
         }
 
-        button:hover { background-color: #15803d; transform: translateY(-1px); }
+        button:hover { background-color: #047857; }
+        button:active { transform: scale(0.98); }
 
-        #dungeon-stage {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-
-        .hero-card {
-            background-color: var(--card-bg);
-            border: 2px solid #334155;
-            border-radius: 12px;
-            padding: 16px;
-            text-align: center;
+        /* Canvas Stage */
+        #canvas-container {
             position: relative;
-            transition: border-color 0.3s, transform 0.2s;
-        }
-
-        .hero-avatar {
-            font-size: 3.5rem;
-            margin: 10px 0;
-            display: inline-block;
-            transition: transform 0.15s ease-in-out;
-        }
-
-        .hero-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 4px; }
-        .hero-status { font-size: 0.85rem; color: #94a3b8; height: 1.2em; }
-
-        .hero-card[data-hero="barbarian"] { border-top: 4px solid var(--barbarian-color); }
-        .hero-card[data-hero="wizard"]    { border-top: 4px solid var(--wizard-color); }
-        .hero-card[data-hero="rogue"]     { border-top: 4px solid var(--rogue-color); }
-
-        @keyframes lunge {
-            0%   { transform: translateY(0) scale(1); }
-            30%  { transform: translateY(-18px) scale(1.25) rotate(-5deg); }
-            60%  { transform: translateY(4px) scale(1.1); }
-            100% { transform: translateY(0) scale(1); }
-        }
-        .anim-lunge .hero-avatar { animation: lunge 0.5s ease-in-out; }
-        .anim-lunge { border-color: var(--barbarian-color) !important; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
-
-        @keyframes cast {
-            0%   { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 0 transparent); }
-            50%  { transform: scale(1.3) rotate(10deg); filter: drop-shadow(0 0 12px #a855f7); }
-            100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 0 transparent); }
-        }
-        .anim-cast .hero-avatar { animation: cast 0.6s ease-in-out; }
-        .anim-cast { border-color: var(--wizard-color) !important; box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); }
-
-        @keyframes dash {
-            0%   { transform: translateX(0); }
-            25%  { transform: translateX(-15px) rotate(-10deg); }
-            50%  { transform: translateX(15px) rotate(10deg); }
-            100% { transform: translateX(0); }
-        }
-        .anim-dash .hero-avatar { animation: dash 0.45s ease-in-out; }
-        .anim-dash { border-color: var(--rogue-color) !important; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
-
-        #terminal {
-            background-color: var(--terminal-bg);
-            border: 1px solid #1e293b;
+            background-color: #030712;
+            border: 2px solid var(--border);
             border-radius: 10px;
-            padding: 16px;
-            font-family: 'Fira Code', 'Courier New', Courier, monospace;
-            font-size: 13.5px;
-            line-height: 1.55;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            margin-bottom: 16px;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        /* Terminal Output */
+        #terminal {
+            background-color: #020617;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
             color: #38bdf8;
             white-space: pre-wrap;
             word-wrap: break-word;
-            height: 380px;
+            height: 240px;
             overflow-y: auto;
         }
     </style>
@@ -121,48 +81,203 @@
 <body>
 
     <div class="header">
-        <h2>⚔️ Multi-Process Dungeon Simulator</h2>
+        <h2>⚔️ Multi-Process Dungeon Engine</h2>
         <button id="startBtn" onclick="runSimulation()">Start Simulation</button>
     </div>
 
-    <div id="dungeon-stage">
-        <div class="hero-card" id="card-barbarian" data-hero="barbarian">
-            <div class="hero-title" style="color: var(--barbarian-color);">Barbarian</div>
-            <div class="hero-avatar">🪓</div>
-            <div class="hero-status" id="status-barbarian">Awaiting battle...</div>
-        </div>
-
-        <div class="hero-card" id="card-wizard" data-hero="wizard">
-            <div class="hero-title" style="color: var(--wizard-color);">Wizard</div>
-            <div class="hero-avatar">🧙‍♂️</div>
-            <div class="hero-status" id="status-wizard">Calibrating sensors...</div>
-        </div>
-
-        <div class="hero-card" id="card-rogue" data-hero="rogue">
-            <div class="hero-title" style="color: var(--rogue-color);">Rogue</div>
-            <div class="hero-avatar">🗡️</div>
-            <div class="hero-status" id="status-rogue">Stealthed in shadows...</div>
-        </div>
+    <!-- 2D Computer Graphics Arena -->
+    <div id="canvas-container">
+        <canvas id="dungeonCanvas" width="800" height="300"></canvas>
     </div>
 
+    <!-- Process Output Stream -->
     <div id="terminal">> Awaiting simulation start...</div>
 
     <script>
-        function triggerHeroAnimation(hero, animClass, statusText) {
-            const card = document.getElementById(`card-${hero}`);
-            const status = document.getElementById(`status-${hero}`);
+        const canvas = document.getElementById('dungeonCanvas');
+        const ctx = canvas.getContext('2d');
 
-            if (statusText) status.textContent = statusText;
-
-            card.classList.remove('anim-lunge', 'anim-cast', 'anim-dash');
-            void card.offsetWidth;
-            card.classList.add(animClass);
-
-            setTimeout(() => {
-                card.classList.remove(animClass);
-            }, 600);
+        // --- Particle System ---
+        const particles = [];
+        function createParticles(x, y, color, count = 15, speedMultiplier = 1) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = (Math.random() * 3 + 1) * speedMultiplier;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: Math.random() * 4 + 2,
+                    color: color,
+                    life: 1.0,
+                    decay: Math.random() * 0.04 + 0.02
+                });
+            }
         }
 
+        // --- Character Sprite Entities ---
+        const heroes = {
+            barbarian: {
+                name: 'Barbarian',
+                emoji: '🪓',
+                homeX: 100, homeY: 150,
+                x: 100, y: 150,
+                targetX: 100, targetY: 150,
+                color: '#ef4444',
+                status: 'Ready'
+            },
+            wizard: {
+                name: 'Wizard',
+                emoji: '🧙‍♂️',
+                homeX: 100, homeY: 80,
+                x: 100, y: 80,
+                targetX: 100, targetY: 80,
+                color: '#a855f7',
+                status: 'Ready'
+            },
+            rogue: {
+                name: 'Rogue',
+                emoji: '🗡️',
+                homeX: 100, homeY: 220,
+                x: 100, y: 220,
+                targetX: 100, targetY: 220,
+                color: '#10b981',
+                status: 'Ready'
+            }
+        };
+
+        const targetArea = { x: 550, y: 150, radius: 40 };
+
+        // --- Render Loop (60 FPS Graphics) ---
+        function drawDungeon() {
+            // Clear Background
+            ctx.fillStyle = '#0b0f19';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Dungeon Tile Grid
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1;
+            const tileSize = 40;
+            for (let x = 0; x < canvas.width; x += tileSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += tileSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Draw Target Zone / Door
+            ctx.save();
+            ctx.strokeStyle = '#334155';
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.arc(targetArea.x, targetArea.y, targetArea.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.font = '24px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🚪', targetArea.x, targetArea.y);
+            ctx.restore();
+
+            // Update & Draw Particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= p.decay;
+
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+
+                ctx.save();
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // Update & Draw Heroes
+            Object.values(heroes).forEach(hero => {
+                // Smooth Movement Vector Interpolation (Lerp)
+                hero.x += (hero.targetX - hero.x) * 0.15;
+                hero.y += (hero.targetY - hero.y) * 0.15;
+
+                // Auto-return home if close to target
+                if (Math.hypot(hero.targetX - hero.x, hero.targetY - hero.y) < 2 && hero.targetX !== hero.homeX) {
+                    hero.targetX = hero.homeX;
+                    hero.targetY = hero.homeY;
+                }
+
+                ctx.save();
+                // Draw Character Aura / Shadow
+                ctx.fillStyle = hero.color;
+                ctx.globalAlpha = 0.2;
+                ctx.beginPath();
+                ctx.arc(hero.x, hero.y + 15, 18, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw Emoji Sprite
+                ctx.globalAlpha = 1.0;
+                ctx.font = '32px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(hero.emoji, hero.x, hero.y);
+
+                // Draw Label & Status
+                ctx.font = '11px sans-serif';
+                ctx.fillStyle = hero.color;
+                ctx.fillText(hero.name, hero.x, hero.y - 28);
+                ctx.restore();
+            });
+
+            requestAnimationFrame(drawDungeon);
+        }
+
+        // Start 60 FPS Render Loop
+        drawDungeon();
+
+        // --- Action Trigger Functions ---
+        function triggerAction(heroKey, actionType) {
+            const hero = heroes[heroKey];
+            if (!hero) return;
+
+            if (actionType === 'attack') { // Barbarian Lunge
+                hero.targetX = targetArea.x - 40;
+                hero.targetY = targetArea.y + 10;
+                setTimeout(() => {
+                    createParticles(targetArea.x - 20, targetArea.y, '#ef4444', 20, 1.5);
+                }, 150);
+            } 
+            else if (actionType === 'cast') { // Wizard Magic Beam
+                hero.targetX = hero.homeX + 60;
+                setTimeout(() => {
+                    // Fire particle beam toward door
+                    for (let x = hero.x + 20; x < targetArea.x; x += 15) {
+                        createParticles(x, hero.y + (Math.random() * 10 - 5), '#a855f7', 3, 0.5);
+                    }
+                }, 100);
+            } 
+            else if (actionType === 'dash') { // Rogue Lockpick / Sweep
+                hero.targetX = targetArea.x - 10;
+                hero.targetY = targetArea.y - 30;
+                setTimeout(() => {
+                    createParticles(targetArea.x, targetArea.y - 20, '#10b981', 15, 1.2);
+                }, 200);
+            }
+        }
+
+        // --- SSE Stream Handler ---
         function runSimulation() {
             const terminal = document.getElementById('terminal');
             terminal.textContent = '> Launching C Engine & Spawning Party...\n\n';
@@ -172,9 +287,7 @@
             eventSource.onmessage = function(event) {
                 if (event.data === '[FINISHED]') {
                     eventSource.close();
-                    document.getElementById('status-barbarian').textContent = 'Victorious!';
-                    document.getElementById('status-wizard').textContent = 'Victorious!';
-                    document.getElementById('status-rogue').textContent = 'Loot collected!';
+                    terminal.textContent += '\n> Simulation sequence complete.\n';
                     return;
                 }
 
@@ -182,14 +295,15 @@
                 terminal.textContent += line + '\n';
                 terminal.scrollTop = terminal.scrollHeight;
 
+                // Match log events to graphics actions
                 if (line.includes('[Barbarian]') || line.includes('barbarian')) {
-                    triggerHeroAnimation('barbarian', 'anim-lunge', 'Attacking monster!');
+                    triggerAction('barbarian', 'attack');
                 } 
                 else if (line.includes('[Wizard]') || line.includes('wizard')) {
-                    triggerHeroAnimation('wizard', 'anim-cast', 'Deciphering glyphs...');
+                    triggerAction('wizard', 'cast');
                 } 
                 else if (line.includes('[Rogue]') || line.includes('rogue')) {
-                    triggerHeroAnimation('rogue', 'anim-dash', 'Picking locks / sweeping...');
+                    triggerAction('rogue', 'dash');
                 }
             };
 
