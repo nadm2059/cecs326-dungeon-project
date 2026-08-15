@@ -1,454 +1,732 @@
+<!-- Specify the HTML document type to enable standard rendering mode in modern browsers -->
 <!DOCTYPE html>
+<!-- Begin the root HTML element and set the language attribute to English -->
 <html lang="en">
+<!-- Begin the document metadata section -->
 <head>
+    <!-- Set character encoding for the document to UTF-8 to support all standard symbols -->
     <meta charset="UTF-8">
+    <!-- Set the page title displayed on the browser tab -->
     <title>Multi-Process Dungeon Simulator - Graphic Canvas Engine</title>
+    <!-- Begin internal CSS styling rules -->
     <style>
+        /* Define global CSS root variables for reusable theme colors */
         :root {
+            /* Main dark background color variable */
             --bg: #090d16;
+            /* Container background color variable */
             --panel-bg: #111827;
+            /* Subdued border color variable */
             --border: #1f2937;
+            /* Bright accent cyan color variable */
             --accent: #38bdf8;
         }
 
+        /* Style the main page body element */
         body {
+            /* Apply background color using the root background CSS variable */
             background-color: var(--bg);
+            /* Set light gray text color for primary readability */
             color: #f3f4f6;
+            /* Apply system and sans-serif fonts for clean text rendering */
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            /* Add 20px padding around the viewport */
             padding: 20px;
+            /* Cap maximum page width for centered layout design */
             max-width: 960px;
+            /* Center the body container horizontally within the browser window */
             margin: 0 auto;
         }
 
+        /* Style the header container layout */
         .header {
+            /* Use flexbox layout for child positioning */
             display: flex;
+            /* Push header items to extreme left and right sides */
             justify-content: space-between;
+            /* Vertically align header text and start button in the center */
             align-items: center;
+            /* Space out header from the main canvas element below */
             margin-bottom: 16px;
         }
 
-        h2 { margin: 0; font-size: 1.5rem; letter-spacing: -0.02em; }
+        /* Style the primary header title text */
+        h2 { 
+            /* Remove default browser top/bottom heading margins */
+            margin: 0; 
+            /* Set header font size */
+            font-size: 1.5rem; 
+            /* Slightly tighten character spacing for title typography */
+            letter-spacing: -0.02em; 
+        }
 
+        /* Style the start button trigger element */
         button {
+            /* Set button background color to emerald green */
             background-color: #059669;
+            /* Set button text color to white */
             color: white;
+            /* Remove standard default button borders */
             border: none;
+            /* Add vertical (10px) and horizontal (22px) internal padding */
             padding: 10px 22px;
+            /* Set button text font size */
             font-size: 14px;
+            /* Make button text semibold */
             font-weight: 600;
+            /* Round the corners of the button */
             border-radius: 6px;
+            /* Change mouse cursor to pointer hand when hovering */
             cursor: pointer;
+            /* Add smooth transition timing for hover and click state animation */
             transition: all 0.2s ease;
         }
 
-        button:hover { background-color: #047857; }
-        button:active { transform: scale(0.98); }
+        /* Style button state when user hovers over it */
+        button:hover { 
+            /* Darken green background color on hover */
+            background-color: #047857; 
+        }
 
+        /* Style button state when user clicks on it */
+        button:active { 
+            /* Scale button down slightly to provide press feedback */
+            transform: scale(0.98); 
+        }
+
+        /* Style wrapper element surrounding the 2D canvas */
         #canvas-container {
+            /* Establish positioning context for absolute child elements if needed */
             position: relative;
+            /* Set container interior background color to near black */
             background-color: #030712;
+            /* Add 2px solid border using border variable */
             border: 2px solid var(--border);
+            /* Round the edges of the canvas viewport */
             border-radius: 12px;
+            /* Clip any overflowing child content within the rounded borders */
             overflow: hidden;
+            /* Add deep drop shadow effect underneath the canvas frame */
             box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.6);
+            /* Space canvas wrapper from the terminal element below */
             margin-bottom: 16px;
         }
 
-        canvas { display: block; width: 100%; height: auto; }
+        /* Style HTML canvas element */
+        canvas { 
+            /* Display canvas as block to remove unwanted baseline space */
+            display: block; 
+            /* Make canvas scale dynamically to fill wrapper width */
+            width: 100%; 
+            /* Maintain natural aspect ratio automatically */
+            height: auto; 
+        }
 
+        /* Style terminal output box element */
         #terminal {
+            /* Set dark slate background color for terminal aesthetic */
             background-color: #020617;
+            /* Add thin border around terminal container */
             border: 1px solid var(--border);
+            /* Round terminal container corners */
             border-radius: 8px;
+            /* Add internal padding around terminal log text */
             padding: 14px;
+            /* Use monospace fonts to emulate terminal command prompt */
             font-family: 'Fira Code', 'Courier New', monospace;
+            /* Set terminal text size */
             font-size: 13px;
+            /* Set line height for comfortable line spacing */
             line-height: 1.55;
+            /* Set default text color to accent cyan */
             color: var(--accent);
+            /* Preserve whitespace formatting and allow auto word wrapping */
             white-space: pre-wrap;
+            /* Break long continuous words onto new lines */
             word-wrap: break-word;
+            /* Set fixed height for the scrollable log window */
             height: 250px;
+            /* Enable vertical scrolling when content exceeds container height */
             overflow-y: auto;
         }
+    <!-- End style block -->
     </style>
+<!-- End head element -->
 </head>
+<!-- Begin HTML body element -->
 <body>
 
+    <!-- Header section container -->
     <div class="header">
+        <!-- Main title display -->
         <h2>⚔️ Multi-Process Dungeon Simulator</h2>
+        <!-- Button trigger to start SSE stream and simulation loop -->
         <button id="startBtn" onclick="runSimulation()">Start Simulation</button>
+    <!-- End header container -->
     </div>
 
-    <!-- 2D Interactive Computer Graphics Stage -->
+    <!-- Container wrapper for 2D Canvas stage -->
     <div id="canvas-container">
+        <!-- Render surface element for graphics rendering with explicitly set dimensions -->
         <canvas id="dungeonCanvas" width="900" height="380"></canvas>
+    <!-- End canvas wrapper container -->
     </div>
 
-    <!-- Live Execution Stream -->
+    <!-- Output box element for displaying real-time stream logs -->
     <div id="terminal">> Awaiting simulation start...</div>
 
+    <!-- Begin JavaScript engine logic -->
     <script>
+        // Fetch reference to the HTML canvas element from DOM
         const canvas = document.getElementById('dungeonCanvas');
+        // Obtain 2D rendering context interface for drawing on canvas
         const ctx = canvas.getContext('2d');
 
         // --- Global Simulation State ---
+        // Create master object tracking overall game state and active room data
         const gameState = {
+            // Track active room number
             room: 1,
+            // Track total accumulative score achieved by party
             score: 0,
+            // Track execution status ('IDLE', 'RUNNING', 'FINISHED', 'STOPPED')
             status: 'IDLE',
-            activeObstacle: null, // 'monster', 'barrier', 'trap', 'vault'
+            // Track current active room obstacle key ('monster', 'barrier', 'trap', 'vault')
+            activeObstacle: null,
+            // Object tracking monster health attributes
             monster: { hp: 100, maxHp: 100, name: '' },
+            // Object tracking rune barrier cipher status
             barrier: { cipher: '', solved: '', active: false },
+            // Object tracking lockpicking binary pick progress
             trap: { currentPos: 0, targetPos: 0, active: false },
+            // Object tracking final vault status and collected artifact pieces
             vault: { active: false, lever1: false, lever2: false, artifact: '', solvedWord: '' }
         };
 
         // --- Particle Engine ---
+        // Array storing active particle emitter instances
         const particles = [];
+        // Function spawning particle bursts at specified coordinates
         function addParticles(x, y, color, count = 15, speed = 2) {
+            // Loop for requested particle count
             for (let i = 0; i < count; i++) {
+                // Calculate random angle in radians (0 to 2*PI)
                 const angle = Math.random() * Math.PI * 2;
+                // Generate randomized velocity speed magnitude
                 const pSpeed = (Math.random() * 3 + 1) * speed;
+                // Push constructed particle object into master particle list
                 particles.push({
+                    // Set horizontal starting coordinate
                     x, y,
+                    // Compute horizontal velocity component using cosine
                     vx: Math.cos(angle) * pSpeed,
+                    // Compute vertical velocity component using sine
                     vy: Math.sin(angle) * pSpeed,
+                    // Set randomized particle circle radius size
                     size: Math.random() * 4 + 2,
+                    // Set particle color value
                     color,
+                    // Initialize particle opacity/life gauge to full (1.0)
                     life: 1.0,
+                    // Set randomized decay rate for opacity fade out
                     decay: Math.random() * 0.03 + 0.02
                 });
             }
         }
 
         // --- Heroes Vector Objects ---
+        // Define party hero objects storing position and target interpolation coordinates
         const heroes = {
+            // Barbarian hero state parameters
             barbarian: { name: 'Barbarian', emoji: '🪓', homeX: 100, homeY: 130, x: 100, y: 130, targetX: 100, targetY: 130, color: '#ef4444' },
+            // Wizard hero state parameters
             wizard:    { name: 'Wizard',    emoji: '🧙‍♂️', homeX: 100, homeY: 210, x: 100, y: 210, targetX: 100, targetY: 210, color: '#a855f7' },
+            // Rogue hero state parameters
             rogue:     { name: 'Rogue',     emoji: '🗡️', homeX: 100, homeY: 290, x: 100, y: 290, targetX: 100, targetY: 290, color: '#10b981' }
         };
 
         // --- 60 FPS Computer Graphics Render Loop ---
+        // Core game loop function called every animation frame
         function render() {
-            // Clear Stage
+            // Fill background with dark navy color to clear prior frame
             ctx.fillStyle = '#090d16';
+            // Draw clearing rectangle over full canvas area
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw Background Dungeon Grid
+            // Draw Background Dungeon Grid lines
             ctx.strokeStyle = '#1e293b';
+            // Set grid stroke thickness
             ctx.lineWidth = 1;
+            // Iterate across canvas width in 40px steps to draw vertical grid lines
             for (let x = 0; x < canvas.width; x += 40) {
+                // Begin new vector path
                 ctx.beginPath(); ctx.moveTo(x, 50); ctx.lineTo(x, canvas.height); ctx.stroke();
             }
+            // Iterate down canvas height starting below HUD bar in 40px steps for horizontal lines
             for (let y = 50; y < canvas.height; y += 40) {
+                // Begin new vector path
                 ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
             }
 
-            // Draw HUD Top Header Bar
+            // Draw HUD Top Header Bar background
             ctx.fillStyle = '#0f172a';
+            // Render HUD rectangle at top of canvas
             ctx.fillRect(0, 0, canvas.width, 50);
+            // Set HUD boundary stroke color
             ctx.strokeStyle = '#1f2937';
+            // Draw bottom border outline for HUD bar
             ctx.strokeRect(0, 0, canvas.width, 50);
 
+            // Configure HUD text font styling
             ctx.font = 'bold 14px sans-serif';
+            // Set color to cyan for Room tracker
             ctx.fillStyle = '#38bdf8';
+            // Render Room tracker string
             ctx.fillText(`ROOM: ${gameState.room}/10`, 20, 30);
+            // Set color to amber for Score tracker
             ctx.fillStyle = '#f59e0b';
+            // Render Score tracker string
             ctx.fillText(`SCORE: ${gameState.score} / 360`, 160, 30);
+            // Set color dynamically based on simulation status (Green if running, else gray)
             ctx.fillStyle = gameState.status === 'RUNNING' ? '#10b981' : '#94a3b8';
+            // Render status string
             ctx.fillText(`STATUS: ${gameState.status}`, 340, 30);
 
             // --- OBSTACLE RENDERING ---
+            // Set default horizontal focal center point for obstacle graphics
             const stageCenterX = 580;
+            // Set default vertical focal center point for obstacle graphics
             const stageCenterY = 210;
 
-            // 1. Monster Visual
+            // 1. Render Monster Visual
             if (gameState.activeObstacle === 'monster') {
+                // Save current context state
                 ctx.save();
+                // Set large font size for monster emoji sprite
                 ctx.font = '55px sans-serif';
+                // Center text alignment horizontally
                 ctx.textAlign = 'center';
+                // Render monster emoji on stage
                 ctx.fillText('👹', stageCenterX, stageCenterY);
 
-                // Monster Health Bar
+                // Draw Monster Health Bar Background
                 ctx.fillStyle = '#1e293b';
+                // Render dark underlying health bar track
                 ctx.fillRect(stageCenterX - 60, stageCenterY - 60, 120, 12);
+                // Set health fill color to red
                 ctx.fillStyle = '#ef4444';
+                // Render filled red health bar proportional to current HP ratio
                 ctx.fillRect(stageCenterX - 60, stageCenterY - 60, (gameState.monster.hp / gameState.monster.maxHp) * 120, 12);
+                // Set health bar border color to near-white
                 ctx.strokeStyle = '#f8fafc';
+                // Draw outline around health bar track
                 ctx.strokeRect(stageCenterX - 60, stageCenterY - 60, 120, 12);
+                // Restore canvas state to remove local transforms/styles
                 ctx.restore();
             }
 
-            // 2. Barrier Visual (Glowing Runes Shield)
+            // 2. Render Barrier Visual (Glowing Runes Shield)
             else if (gameState.activeObstacle === 'barrier') {
+                // Save context state
                 ctx.save();
+                // Set glowing purple shadow color
                 ctx.shadowColor = '#a855f7';
+                // Set glow blur intensity radius
                 ctx.shadowBlur = 15;
+                // Set laser barrier stroke line color
                 ctx.strokeStyle = '#c084fc';
+                // Set laser line width thickness
                 ctx.lineWidth = 6;
+                // Begin laser beam path
                 ctx.beginPath();
+                // Move path start to top of obstacle area
                 ctx.moveTo(stageCenterX, 80);
+                // Draw line path down to bottom of obstacle area
                 ctx.lineTo(stageCenterX, 340);
+                // Render stroke beam
                 ctx.stroke();
 
+                // Set font for cipher rune display text
                 ctx.font = 'bold 16px monospace';
+                // Set light purple cipher text color
                 ctx.fillStyle = '#e9d5ff';
+                // Center align text horizontally
                 ctx.textAlign = 'center';
+                // Render cipher ciphertext text on left side of barrier
                 ctx.fillText(`ᚱᚢᚾᛖ: "${gameState.barrier.cipher}"`, stageCenterX - 110, stageCenterY - 20);
 
+                // Render solved status text if barrier counter-spell has solved the cipher
                 if (gameState.barrier.solved) {
+                    // Set color to green for solved status
                     ctx.fillStyle = '#10b981';
+                    // Render solved counter-spell text string
                     ctx.fillText(`SOLVED: "${gameState.barrier.solved}"`, stageCenterX - 110, stageCenterY + 20);
                 }
+                // Restore canvas context state
                 ctx.restore();
             }
 
-            // 3. Trap Visual (Binary Search Gauge)
+            // 3. Render Trap Visual (Binary Search Gauge)
             else if (gameState.activeObstacle === 'trap') {
+                // Save canvas state
                 ctx.save();
+                // Set size for lock gear emoji icon
                 ctx.font = '45px sans-serif';
+                // Center text alignment
                 ctx.textAlign = 'center';
+                // Render lock mechanism emoji above track gauge
                 ctx.fillText('⚙️🔒', stageCenterX, stageCenterY - 30);
 
-                // Binary Pick Gauge
+                // Define Lock Gauge Track Coordinates
                 const gaugeX = stageCenterX - 120;
                 const gaugeY = stageCenterY + 40;
                 const gaugeWidth = 240;
 
+                // Fill gauge background track
                 ctx.fillStyle = '#1e293b';
                 ctx.fillRect(gaugeX, gaugeY, gaugeWidth, 16);
+                // Stroke border around track
                 ctx.strokeStyle = '#475569';
                 ctx.strokeRect(gaugeX, gaugeY, gaugeWidth, 16);
 
-                // Target Position (Red Marker)
+                // Calculate target position on track (Red Marker)
                 const targetX = gaugeX + (gameState.trap.targetPos / 100) * gaugeWidth;
+                // Set fill color to red for target marker
                 ctx.fillStyle = '#ef4444';
+                // Render vertical red target indicator line
                 ctx.fillRect(targetX - 2, gaugeY - 4, 4, 24);
 
-                // Rogue Pick Position (Green Slider)
+                // Calculate Rogue pick position on track (Green Slider)
                 const currentX = gaugeX + (gameState.trap.currentPos / 100) * gaugeWidth;
+                // Set green color for Rogue's current pick location slider
                 ctx.fillStyle = '#10b981';
+                // Begin drawing circular pick indicator
                 ctx.beginPath();
                 ctx.arc(currentX, gaugeY + 8, 8, 0, Math.PI * 2);
                 ctx.fill();
 
+                // Render binary search lock picking values
                 ctx.font = '12px monospace';
                 ctx.fillStyle = '#10b981';
                 ctx.fillText(`Pick: ${gameState.trap.currentPos.toFixed(2)} | Target: ${gameState.trap.targetPos.toFixed(2)}`, stageCenterX, gaugeY + 36);
+                // Restore canvas state
                 ctx.restore();
             }
 
-            // 4. Treasure Vault Visual (Levers & Artifact Vault)
+            // 4. Render Treasure Vault Visual (Levers & Artifact Vault)
             else if (gameState.activeObstacle === 'vault') {
+                // Save canvas context state
                 ctx.save();
-                // Vault Door
+                // Vault Door Graphic Emoji
                 ctx.font = '50px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.fillText('🏛️', stageCenterX, stageCenterY - 40);
 
-                // Lever 1 (Barbarian)
+                // Lever 1 (Barbarian) Graphic Render
                 ctx.font = '28px sans-serif';
-                ctx.fillText(gameState.vault.lever1 ? '🎚️ [L1: DOWN]' : '🎚️ [L1: UP]', stageCenterX - 110, stageCenterY + 50);
+                // Draw Lever 1 state text shifted horizontally to -190 to avoid center text collision
+                ctx.fillText(gameState.vault.lever1 ? '🎚️ [L1: DOWN]' : '🎚️ [L1: UP]', stageCenterX - 190, stageCenterY + 50);
+                // Change indicator bar color (Green if down, slate gray if up)
                 ctx.fillStyle = gameState.vault.lever1 ? '#10b981' : '#64748b';
-                ctx.fillRect(stageCenterX - 140, stageCenterY + 65, 60, 6);
+                // Draw Lever 1 base state bar aligned under text
+                ctx.fillRect(stageCenterX - 220, stageCenterY + 65, 60, 6);
 
-                // Lever 2 (Wizard)
-                ctx.fillText(gameState.vault.lever2 ? '🎚️ [L2: DOWN]' : '🎚️ [L2: UP]', stageCenterX + 110, stageCenterY + 50);
+                // Lever 2 (Wizard) Graphic Render
+                // Draw Lever 2 state text shifted horizontally to +190 to avoid center text collision
+                ctx.fillText(gameState.vault.lever2 ? '🎚️ [L2: DOWN]' : '🎚️ [L2: UP]', stageCenterX + 190, stageCenterY + 50);
+                // Change indicator bar color (Green if down, slate gray if up)
                 ctx.fillStyle = gameState.vault.lever2 ? '#10b981' : '#64748b';
-                ctx.fillRect(stageCenterX + 80, stageCenterY + 65, 60, 6);
+                // Draw Lever 2 base state bar aligned under text
+                ctx.fillRect(stageCenterX + 160, stageCenterY + 65, 60, 6);
 
-                // Artifact Box
+                // Render Artifact Box background
                 ctx.fillStyle = '#1e293b';
                 ctx.fillRect(stageCenterX - 80, stageCenterY + 20, 160, 35);
+                // Stroke gold box border around artifact display
                 ctx.strokeStyle = '#f59e0b';
                 ctx.strokeRect(stageCenterX - 80, stageCenterY + 20, 160, 35);
 
+                // Render collected artifact letters inside the vault box
                 ctx.font = 'bold 18px monospace';
                 ctx.fillStyle = '#f59e0b';
                 ctx.fillText(`VAULT: ${gameState.vault.artifact}`, stageCenterX, stageCenterY + 44);
+                // Restore context state
                 ctx.restore();
             }
 
-            // Render Particles
+            // --- Render Particle Animations ---
+            // Iterate backwards through particle array to safely allow removal during array iteration
             for (let i = particles.length - 1; i >= 0; i--) {
+                // Get current particle object
                 const p = particles[i];
+                // Update position using particle velocity components
                 p.x += p.vx; p.y += p.vy; p.life -= p.decay;
+                // Remove dead particle from list if life opacity expires
                 if (p.life <= 0) { particles.splice(i, 1); continue; }
 
+                // Save context state for particle drawing
                 ctx.save();
+                // Set alpha opacity relative to remaining life ratio
                 ctx.globalAlpha = p.life;
+                // Set particle color
                 ctx.fillStyle = p.color;
+                // Render particle dot arc shape
                 ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+                // Restore state
                 ctx.restore();
             }
 
-            // Interpolate & Render Hero Sprites
+            // --- Interpolate & Render Hero Sprites ---
+            // Loop over all party hero instances
             Object.values(heroes).forEach(hero => {
+                // Smoothly interpolate current X position toward target X coordinate using linear lerp
                 hero.x += (hero.targetX - hero.x) * 0.15;
+                // Smoothly interpolate current Y position toward target Y coordinate using linear lerp
                 hero.y += (hero.targetY - hero.y) * 0.15;
 
+                // Save canvas state for hero rendering
                 ctx.save();
-                // Shadow / Aura
+                // Draw Hero Shadow / Glowing Ground Aura
                 ctx.fillStyle = hero.color;
+                // Set semi-transparent opacity for aura shadow base
                 ctx.globalAlpha = 0.25;
+                // Draw ground circle ellipse under hero sprite feet
                 ctx.beginPath(); ctx.arc(hero.x, hero.y + 12, 16, 0, Math.PI * 2); ctx.fill();
 
-                // Sprite Emoji
+                // Draw Hero Emoji Sprite Symbol
                 ctx.globalAlpha = 1.0;
                 ctx.font = '32px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(hero.emoji, hero.x, hero.y);
 
-                // Name Tag
+                // Draw Hero Name Tag label above character head
                 ctx.font = '11px sans-serif';
                 ctx.fillStyle = hero.color;
                 ctx.fillText(hero.name, hero.x, hero.y - 24);
+                // Restore context state
                 ctx.restore();
             });
 
+            // Request browser to invoke render loop again on next repaint cycle (~60 FPS)
             requestAnimationFrame(render);
         }
 
-        // Kickoff Render Loop
+        // Kickoff Render Loop on initial script execute
         render();
 
         // --- Stream Parser & Graphics Trigger Engine ---
+        // Function connected to "Start Simulation" button click action
         function runSimulation() {
+            // Fetch handle to UI terminal output element
             const terminal = document.getElementById('terminal');
+            // Reset terminal contents with launcher start message
             terminal.textContent = '> Launching C Engine & Spawning Party...\n\n';
 
+            // Set game running status
             gameState.status = 'RUNNING';
+            // Reset score counter to 0
             gameState.score = 0;
+            // Reset current room to 1
             gameState.room = 1;
 
+            // Establish Server-Sent Events (SSE) stream connection to backend process output
             const eventSource = new EventSource('/stream-game');
 
+            // Set up listener callback for incoming stream lines
             eventSource.onmessage = function(event) {
+                // Check if backend emitted completion signal line
                 if (event.data === '[FINISHED]') {
+                    // Close SSE connection stream
                     eventSource.close();
+                    // Mark game state finished
                     gameState.status = 'FINISHED';
-                    // Reset heroes to home positions
+                    // Reset hero target positions back to starting home positions
                     Object.values(heroes).forEach(h => { h.targetX = h.homeX; h.targetY = h.homeY; });
+                    // Exit handler early
                     return;
                 }
 
+                // Extract line data string from SSE event payload
                 const line = event.data;
+                // Append log line to terminal window UI
                 terminal.textContent += line + '\n';
+                // Auto-scroll terminal text frame to bottom
                 terminal.scrollTop = terminal.scrollHeight;
 
                 // --- PARSE LOG LINES TO CANVAS ACTIONS ---
 
-                // Room Tracker
+                // Room Tracker: Parse loop index to track active room progression
                 if (line.includes('Enter for loop,')) {
+                    // Extract room loop index using regex pattern match
                     const match = line.match(/Enter for loop,\s*(\d+)/);
+                    // Update current room counter display value (0-indexed to 1-indexed)
                     if (match) gameState.room = parseInt(match[1]) + 1;
                 }
 
-                // Monster Encounter
+                // Monster Encounter Trigger
                 if (line.includes('This room has a monster in it!')) {
+                    // Set active obstacle mode to monster
                     gameState.activeObstacle = 'monster';
+                    // Reset monster HP values to full health
                     gameState.monster.hp = 100;
                     gameState.monster.maxHp = 100;
                 }
+                // Barbarian Attack Trigger on Monster
                 if (line.includes('Attacking enemy health point')) {
-                    // Barbarian Attacks Monster
+                    // Move Barbarian sprite forward toward monster stage center
                     heroes.barbarian.targetX = 520;
                     heroes.barbarian.targetY = 210;
+                    // Trigger delayed strike impact animation
                     setTimeout(() => {
+                        // Drop monster HP to zero
                         gameState.monster.hp = 0;
+                        // Spawn red blood burst hit particles at monster coordinates
                         addParticles(580, 210, '#ef4444', 25, 2);
+                        // Return Barbarian back to default home standing position after short delay
                         setTimeout(() => { heroes.barbarian.targetX = heroes.barbarian.homeX; heroes.barbarian.targetY = heroes.barbarian.homeY; }, 300);
                     }, 200);
                 }
 
-                // Barrier Encounters
+                // Barrier Encounters Trigger
                 if (line.includes('ancient incantation:')) {
+                    // Set active obstacle to barrier
                     gameState.activeObstacle = 'barrier';
+                    // Reset cipher string placeholders
                     gameState.barrier.cipher = '...';
                     gameState.barrier.solved = '';
                 }
+                // Wizard detects magic barrier
                 if (line.includes('[Wizard] Magic barrier field detected')) {
+                    // Step Wizard forward toward barrier
                     heroes.wizard.targetX = 250;
                 }
+                // Counter-spell completion trigger
                 if (line.includes('Counter-spell focused:')) {
+                    // Extract solved magic counter-spell text string
                     const spell = line.split('Counter-spell focused:')[1].trim();
+                    // Save solved spell string into game state
                     gameState.barrier.solved = spell;
-                    // Wizard Spell Beam Arc
+                    // Spawn purple spell cast particles
                     addParticles(580, 210, '#a855f7', 30, 2.5);
+                    // Reset Wizard position after casting spell
                     setTimeout(() => {
                         heroes.wizard.targetX = heroes.wizard.homeX;
                     }, 400);
                 }
-                // Capture ciphertext string line
-                if (gameState.activeObstacle === 'barrier' && !line.includes('[Wizard]') && !line.includes('A barrier') && !line.includes('ancient incantation') && !line.includes('SUCCESS')) {
+                // Capture raw cipher text line while filtering out system log noise lines
+                if (
+                    gameState.activeObstacle === 'barrier' && 
+                    !line.includes('[Wizard]') && 
+                    !line.includes('A barrier') && 
+                    !line.includes('ancient incantation') && 
+                    !line.includes('SUCCESS') &&
+                    !line.includes('Enter for loop')
+                ) {
+                    // Verify candidate cipher line length bounds
                     if (line.trim().length > 0 && line.trim().length < 30) {
+                        // Store cipher text in barrier state object
                         gameState.barrier.cipher = line.trim();
                     }
                 }
 
-                // Trap Encounters & Binary Search Lockpicking
+                // Trap Encounters & Binary Search Lockpicking Triggers
                 if (line.includes('This room is guarded by a trap!')) {
+                    // Set active obstacle to trap gauge
                     gameState.activeObstacle = 'trap';
                 }
+                // Update Rogue lock picking gauge step positions
                 if (line.includes("The rogue's pick is at position")) {
+                    // Step Rogue forward to operate lock
                     heroes.rogue.targetX = 420;
+                    // Extract floating point pick position and target lock location using regex
                     const match = line.match(/position\s+([\d.]+)\s*->\s*([\d.]+)/);
                     if (match) {
+                        // Store current pick value float
                         gameState.trap.currentPos = parseFloat(match[1]);
+                        // Store target lock location float
                         gameState.trap.targetPos = parseFloat(match[2]);
+                        // Spawn small lock pick spark particles on step
                         addParticles(580, 250, '#10b981', 4, 0.8);
                     }
                 }
+                // Lock cleared event handler
                 if (line.includes('Lock cleared!')) {
+                    // Spawn green success particles
                     addParticles(580, 250, '#10b981', 20, 1.5);
+                    // Return Rogue to starting home coordinate
                     setTimeout(() => { heroes.rogue.targetX = heroes.rogue.homeX; }, 300);
                 }
 
-                // Scores & Vault Sequence
+                // Intermediate Score Updates & Final Vault Sequence Trigger
                 if (line.includes('Score before semaphores:')) {
+                    // Update HUD score display
                     gameState.score = 140;
                 }
+                // Treasure Vault Unlocked Event Trigger
                 if (line.includes('Behold, the door to the treasure has opened!')) {
+                    // Set active stage view to final vault sequence
                     gameState.activeObstacle = 'vault';
+                    // Reset collected artifact string tracker
                     gameState.vault.artifact = '';
                 }
 
-                // Levers
+                // Vault Lever 1 Action Trigger (Barbarian)
                 if (line.includes('Securing Lever 1')) {
-                    heroes.barbarian.targetX = 440;
-                    heroes.barbarian.targetY = 260;
+                    // Move Barbarian to align directly with Lever 1 (-190 horizontal offset from center)
+                    heroes.barbarian.targetX = stageCenterX - 190;
+                    // Align Y coordinate height
+                    heroes.barbarian.targetY = stageCenterY;
+                    // Mark Lever 1 active/pulled down
                     gameState.vault.lever1 = true;
-                    addParticles(440, 260, '#ef4444', 10, 1);
+                    // Emit particles over Lever 1
+                    addParticles(stageCenterX - 190, stageCenterY + 30, '#ef4444', 10, 1);
                 }
+                // Vault Lever 2 Action Trigger (Wizard)
                 if (line.includes('Securing Lever 2')) {
-                    heroes.wizard.targetX = 690;
-                    heroes.wizard.targetY = 260;
+                    // Move Wizard to align directly with Lever 2 (+190 horizontal offset from center)
+                    heroes.wizard.targetX = stageCenterX + 190;
+                    // Align Y coordinate height
+                    heroes.wizard.targetY = stageCenterY;
+                    // Mark Lever 2 active/pulled down
                     gameState.vault.lever2 = true;
-                    addParticles(690, 260, '#a855f7', 10, 1);
+                    // Emit particles over Lever 2
+                    addParticles(stageCenterX + 190, stageCenterY + 30, '#a855f7', 10, 1);
                 }
 
-                // Collecting Artifact Letters
+                // Collecting Artifact Letters Trigger (Rogue)
                 if (line.includes('Collected artifact piece')) {
+                    // Move Rogue to center vault box location
                     heroes.rogue.targetX = 580;
                     heroes.rogue.targetY = 250;
+                    // Parse letter string character from log line
                     const letter = line.split(':')[1].trim();
+                    // Append collected character to vault artifact string
                     gameState.vault.artifact += letter;
+                    // Emit gold treasure sparkle particles
                     addParticles(580, 250, '#f59e0b', 15, 1.5);
                 }
 
-                // Final Score
+                // Final Score Completion Event Trigger
                 if (line.includes('Total score:')) {
+                    // Set final max score in game state
                     gameState.score = 360;
+                    // Emit celebratory gold particle burst
                     addParticles(580, 200, '#f59e0b', 50, 3);
                 }
             };
 
+            // Error handler callback for EventSource SSE stream failures
             eventSource.onerror = function() {
+                // Close SSE stream connection
                 eventSource.close();
+                // Set status to stopped
                 gameState.status = 'STOPPED';
             };
         }
+    <!-- End JavaScript script section -->
     </script>
+<!-- End HTML body section -->
 </body>
+<!-- End root HTML document -->
 </html>
