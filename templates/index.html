@@ -56,13 +56,16 @@
 
             eventSource.onmessage = function(event) {
                 // Append line with explicit newline
+                if (event.data === `[FINISHED]`) {
+                    eventSource.close();
+                    return;
+                }
                 terminal.textContent += event.data + '\n';
                 // Auto-scroll to bottom as output logs arrive
                 terminal.scrollTop = terminal.scrollHeight;
             };
 
             eventSource.onerror = function() {
-                terminal.textContent += '\n> Simulation run finished.\n';
                 eventSource.close();
             };
         }
